@@ -6,7 +6,7 @@ estimates_file_name = ARGV[1]
 # See whether the analysis directory exists.
 raise "The analysis directory #{analysis_dir} could not be found!" unless Dir.exists?(analysis_dir)
 
-# Determine the replicate directories and see whether they contain .mrca log files
+# Determine the replicate directories and see whether they contain .log log files
 potential_replicate_dirs = []
 Dir.entries("#{analysis_dir}/replicates").each do |e|
 	potential_replicate_dirs << e if e.match(/r\d\d\d/)
@@ -31,14 +31,20 @@ diversification_rates = [] # diversificationRateFBD.t:tree1
 turnovers = [] # turnoverFBD.t:tree1
 sampling_proportions = [] # samplingProportionFBD.t:tree1
 
-# Set the burnin proportion.
-burnin_proportion = 0.2
-
 # Prepare the output string.
 estimates_output = "diversification_rate\tturnover\tsampling_proportion\n"
 
 # Repeat for each replicate directory.
 replicate_dirs.each do |r|
+
+	# Initiate arrays for this replicate, for estimates of the diversification rate, the turnover, and teh sampling proportion.
+	diversification_rates_this_rep = [] # diversificationRateFBD.t:tree1
+	turnovers_this_rep = [] # turnoverFBD.t:tree1
+	sampling_proportions_this_rep = [] # samplingProportionFBD.t:tree1
+
+	# Read the burnin.txt file for this replicate.
+	burnin_file = File.open("#{r}/burnin.txt")
+	burnin = burnin_file.read.to_i
 
 	# Read the .log file for this replicate.
 	replicate_dir_entries = Dir.entries(r)
@@ -64,8 +70,10 @@ replicate_dirs.each do |r|
 	end
 	header = log_lines[x]
 	log_lines_without_header = log_lines[x+1..-1]
-	burnin = (burnin_proportion * log_lines_without_header.size).round
-	log_lines_without_burnin = log_lines_without_header[burnin+1..-1]
+	log_lines_without_burnin = []
+	log_lines_without_header.each do |l|
+		log_lines_without_burnin << l if l.split[0].to_i > burnin	
+	end
 
 	# Analyze the .log file for this replicate.
 	header_ary = header.split("\t")
@@ -83,10 +91,20 @@ replicate_dirs.each do |r|
 	end
 	log_lines_without_burnin.each do |l|
 		line_ary = l.split("\t")
-		diversification_rates << line_ary[diversification_rate_index].to_f
-		turnovers << line_ary[turnover_index].to_f
-		sampling_proportions << line_ary[sampling_proportion_index].to_f
+		diversification_rates_this_rep << line_ary[diversification_rate_index].to_f
+		turnovers_this_rep << line_ary[turnover_index].to_f
+		sampling_proportions_this_rep << line_ary[sampling_proportion_index].to_f
 	end
+
+	# Reduce the number of samples to 1000.
+	diversification_rates_this_rep_red = diversification_rates_this_rep.sample(1000)
+	turnovers_this_rep_red = turnovers_this_rep.sample(1000)
+	sampling_proportions_this_rep_red = sampling_proportions_this_rep.sample(1000)
+
+	# Add posterior samples of this replicate to the arrays for all replicates.
+	diversification_rates_this_rep_red.each {|i| diversification_rates << i}
+	turnovers_this_rep_red.each {|i| turnovers << i}
+	sampling_proportions_this_rep_red.each {|i| sampling_proportions << i}
 end
 
 # Add parameter estimates to output.

@@ -87,14 +87,15 @@ estimated_ages_means = []
 estimated_ages_lowers = []
 estimated_ages_uppers = []
 
-# Set the burnin proportion.
-burnin_proportion = 0.2
-
 # Prepare the output string.
 estimates_output = "true age\testimated age\n"
 
 # Repeat for each replicate directory.
 replicate_dirs.each do |r|
+
+	# Read the burnin.txt file for this replicate.
+	burnin_file = File.open("#{r}/burnin.txt")
+	burnin = burnin_file.read.to_i
 
 	# Read the .mrca log file for this replicate.
 	replicate_dir_entries = Dir.entries(r)
@@ -114,8 +115,10 @@ replicate_dirs.each do |r|
 	mrca_log_file.close
 	header = mrca_log_lines[0]
 	mrca_log_lines_without_header = mrca_log_lines[1..-1]
-	burnin = (burnin_proportion * mrca_log_lines_without_header.size).round
-	mrca_log_lines_without_burnin = mrca_log_lines_without_header[burnin+1..-1]
+	mrca_log_lines_without_burnin = []
+	mrca_log_lines_without_header.each do |l|
+		mrca_log_lines_without_burnin << l if l.split[0].to_i > burnin	
+	end
 
 	# Analyze the .mrca log file for this replicate.
 	header_ary = header.split("\t")
@@ -164,7 +167,7 @@ print "Analyzing estimates..."
 # Some specifications for the SVG output.
 dimX = 600
 dimY = 600
-max_age = 130
+max_age = 125
 cr = 2
 line_width = 2
 frame_stroke_width = 2

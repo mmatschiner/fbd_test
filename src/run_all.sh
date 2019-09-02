@@ -17,4 +17,7 @@ bash get_run_statistics.sh
 bash extract_and_plot_age_estimates.sh
 
 # Get parameter estimates.
-bash extract_parameter_estimates.sh
+bash extract_parameter_estimates_FBD.sh
+
+# Collect all node ages into one file.
+bash get_all_node_ages.sh

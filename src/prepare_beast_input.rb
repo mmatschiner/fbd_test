@@ -119,8 +119,15 @@ accepted_scheme_ids = ["CladeAge", "CladeAge_Range", "FBD", "FBX", "FBY", "FBZ",
 # FBD_Range1 - only oldest fossils, estimate diversification rate and turnover from ranges, fix sampling proportion.
 # FBD_Range2 - only oldest fossils, estimate sampling proportion, diversification rate, and turnover from ranges.
 # FBD_Range3 - all fossils, estimate sampling proportion, diversification rate, and turnover from ranges.
+# All schemes ending in RS - as without but trees were sampled with the random sampling scheme instead of the diversified sampling scheme.
 if ARGV.include?("-s")
-	scheme_id = ARGV[ARGV.index("-s")+1]
+	full_scheme_id = ARGV[ARGV.index("-s")+1]
+	scheme_id = full_scheme_id
+	random_sampling = false
+	if full_scheme_id[-2..-1] == "RS"
+		scheme_id = full_scheme_id[0..-3]
+		random_sampling = true
+	end
 	unless accepted_scheme_ids.include?(scheme_id)
 		raise_string = "ERROR: The specified calibration scheme id #{scheme_id} is not yet accepted. Please modify the code or use a different scheme (accepted schemes:"
 		accepted_scheme_ids.each {|s| raise_string << " #{s},"}
@@ -129,6 +136,8 @@ if ARGV.include?("-s")
 		puts raise_string
 		exit 1
 	end
+	analysis_id = scheme_id
+	analysis_dir_name = "../res/beast/#{full_scheme_id}/replicates"
 else
 	raise "Please specify a scheme name with option \"-s\"!"
 end
@@ -138,8 +147,6 @@ number_of_replicates = 20
 
 # Based on the above arguments, specify directories and ids.
 dataset_dir_name = "../res/datasets"
-analysis_id = scheme_id
-analysis_dir_name = "../res/beast/#{analysis_id}/replicates"
 
 # Repeat for 10 replicates.
 number_of_replicates.times do |r|
@@ -148,7 +155,11 @@ number_of_replicates.times do |r|
 	replicate_id = "r#{(r+1).to_s.rjust(3).gsub(" ","0")}"
 
 	# Read the info file and get the number of extant and sampled species.
-	info_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.info"
+	if random_sampling
+		info_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.seqs.info"
+	else
+		info_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.info"
+	end
 	info_file = File.open(info_file_name)
 	info_file_lines = info_file.readlines
 	n_extant_species = 0
@@ -163,7 +174,11 @@ number_of_replicates.times do |r|
 	end
 
 	# Read the branch file and store branch information in array 'branch'
-	branch_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.branches.txt"
+	if random_sampling
+		branch_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.seqs.branches.txt"
+	else
+		branch_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.branches.txt"
+	end
 	branch_file = File.open(branch_file_name)
 	branch_file_lines = branch_file.readlines
 	branch_file.close
@@ -203,7 +218,11 @@ number_of_replicates.times do |r|
 	end
 
 	# Read the dmp file (to add complete fossil information to branches, which is needed for the FBD_ALL and FBX_all schemes)
-	dump_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.dmp"
+	if random_sampling
+		dump_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.seqs.dmp"
+	else
+		dump_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.seqs.dmp"
+	end
 	dmp_tree = Tree.load(fileName = dump_file_name, verbose=false)
 
 	# For each branch, find the correct branch in the dumped tree.
@@ -337,7 +356,11 @@ number_of_replicates.times do |r|
 
 	# Now, all branches have been characterized.
 	# Read the sequence alignment file.
-	alignment_file_name = "species.fossils.reconstructed.seqs.phy"
+	if random_sampling
+		alignment_file_name = "species.fossils.random_sampling.reconstructed.seqs.phy"
+	else
+		alignment_file_name = "species.fossils.reconstructed.seqs.phy"
+	end
 	alignment_file = File.open("#{dataset_dir_name}/#{replicate_id}/#{alignment_file_name}")
 	alignment_file_lines = alignment_file.readlines
 	ntax = alignment_file_lines[0].strip.split(" ")[0].to_i
@@ -368,12 +391,24 @@ number_of_replicates.times do |r|
 	
 	# Read the starting tree.
 	if scheme_id == "CladeAge" or scheme_id == "CladeAge_Range"
-		starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.tre"
+		if random_sampling
+			starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.tre"
+		else
+			starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.tre"
+		end
 	else
 		if scheme_id == "FBD_Range3"
-			starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.fbd_all.tre"
+			if random_sampling
+				starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.fbd_all.tre"
+			else
+				starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.fbd_all.tre"
+			end
 		else
-			starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.fbd.tre"
+			if random_sampling
+				starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.random_sampling.reconstructed.fbd.tre"
+			else
+				starting_tree_file_name = "#{dataset_dir_name}/#{replicate_id}/species.fossils.reconstructed.fbd.tre"
+			end
 		end
 	end
 	starting_tree_file = File.open(starting_tree_file_name)
@@ -947,7 +982,7 @@ number_of_replicates.times do |r|
 		xml << "        <operator id=\"SATreeScalerFBD.t:tree1\" spec=\"SAScaleOperator\" scaleFactor=\"0.95\" tree=\"@Tree.t:tree1\" weight=\"3.0\"/>\n"
 	end
 	xml << "\n"
-	xml << "        <logger fileName=\"#{analysis_id}.log\" id=\"tracelog\" logEvery=\"50000\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">\n"
+	xml << "        <logger fileName=\"#{full_scheme_id}.log\" id=\"tracelog\" logEvery=\"50000\" model=\"@posterior\" sanitiseHeaders=\"true\" sort=\"smart\">\n"
 	xml << "            <log idref=\"posterior\"/>\n"
 	xml << "            <log idref=\"likelihood\"/>\n"
 	xml << "            <log idref=\"prior\"/>\n"
@@ -972,7 +1007,7 @@ number_of_replicates.times do |r|
 	xml << "            <log branchratemodel=\"@RelaxedClock.c:#{analysis_id}_1\" id=\"rate.c:clock\" spec=\"beast.evolution.branchratemodel.RateStatistic\" tree=\"@Tree.t:tree1\"/>\n"
 	xml << "        </logger>\n"
 	xml << "\n"
-	xml << "        <logger fileName=\"#{analysis_id}.mrca\" logEvery=\"50000\">\n"
+	xml << "        <logger fileName=\"#{full_scheme_id}.mrca\" logEvery=\"50000\">\n"
 	xml << "            <log idref=\"TreeHeight.t:tree\"/>\n"
 	crown_group_names.each {|cg| xml << "            <log idref=\"#{cg}\"/>\n"}
 	xml << "        </logger>\n"
@@ -997,7 +1032,7 @@ number_of_replicates.times do |r|
 	xml << "\n"
 	xml << "</beast>\n"
 
-	xml_file_name = "#{analysis_id}.xml"
+	xml_file_name = "#{full_scheme_id}.xml"
 	Dir.mkdir("#{analysis_dir_name}/#{replicate_id}") unless Dir.exists?("#{analysis_dir_name}/#{replicate_id}")
 	xml_file = File.new("#{analysis_dir_name}/#{replicate_id}/#{xml_file_name}","w")
 	xml_file.write(xml)
@@ -1011,7 +1046,7 @@ number_of_replicates.times do |r|
     slurm_string1 << "#!/bin/bash\n"
     slurm_string1 << "\n"
     slurm_string1 << "# Job name:\n"
-    slurm_string1 << "#SBATCH --job-name=#{analysis_id[0..5]}\n"
+    slurm_string1 << "#SBATCH --job-name=#{full_scheme_id[0..5]}\n"
     slurm_string1 << "#\n"
     slurm_string1 << "# Project:\n"
     slurm_string1 << "#SBATCH --account=nn9244k\n"
@@ -1026,7 +1061,7 @@ number_of_replicates.times do |r|
     slurm_string1 << "#SBATCH --mem-per-cpu=5G\n"
     slurm_string1 << "#\n"
     slurm_string1 << "# Outfile:\n"
-    slurm_string1 << "#SBATCH --output=#{analysis_id}_out.txt\n"
+    slurm_string1 << "#SBATCH --output=#{full_scheme_id}_out.txt\n"
     slurm_string1 << "\n"
     slurm_string1 << "## Set up job environment:\n"
     slurm_string1 << "source /cluster/bin/jobsetup\n"
@@ -1034,16 +1069,16 @@ number_of_replicates.times do |r|
     slurm_string1 << "module load beast2/2.4.2\n"
     slurm_string1 << "\n"
     slurm_string1 << "## Copy input files to the work directory:\n"
-    slurm_string1 << "cp #{analysis_id}.* $SCRATCH\n"
+    slurm_string1 << "cp #{full_scheme_id}.* $SCRATCH\n"
     slurm_string1 << "\n"
     slurm_string1 << "## Run BEAST:\n"
     slurm_string1 << "cd $SCRATCH\n"
-    slurm_string_start = "beast -threads 3 -seed #{rand(100000)} -beagle #{analysis_id}.xml\n"
-    slurm_string_resume = "beast -threads 3 -seed #{rand(100000)} -beagle -resume #{analysis_id}.xml\n"
+    slurm_string_start = "beast -threads 3 -seed #{rand(100000)} -beagle #{full_scheme_id}.xml\n"
+    slurm_string_resume = "beast -threads 3 -seed #{rand(100000)} -beagle -resume #{full_scheme_id}.xml\n"
     slurm_string2 = ""
     slurm_string2 << "\n"
     slurm_string2 << "# Copy files back to the submission directory\n"
-    slurm_string2 << "cp #{analysis_id}* $SUBMITDIR\n"
+    slurm_string2 << "cp #{full_scheme_id}* $SUBMITDIR\n"
     slurm_string2 << "\n"
     slurm_start_file_name = "start.slurm"
     slurm_start_file = File.new("#{analysis_dir_name}/#{replicate_id}/#{slurm_start_file_name}","w")

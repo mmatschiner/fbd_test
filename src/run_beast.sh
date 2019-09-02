@@ -4,7 +4,7 @@
 home=`pwd`
 for analysis_dir in ../res/beast/{CladeAge,FBD}*/replicates/r???
 do
-	cd analysis_dir
+	cd ${analysis_dir}
 	sbatch start.slurm # Replace with resume.slurm if necessary.
 	cd ${home}
 done

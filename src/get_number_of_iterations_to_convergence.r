@@ -9,12 +9,14 @@ library(coda)
 # Read the log file specified as the first command line argument.
 args <- commandArgs(trailingOnly = TRUE)
 log_file_name <- args[1]
+burnin <- as.integer(args[2])
 
 # Read the log file as a table.
 mcmc <- read.table(log_file_name,header=T)
+frequency <- mcmc$Sample[2]
 
 # Set constants.
-burnin_proportion <- 0.2
+# burnin_proportion <- 0.5
 convergence_ess <- 200
 
 # Get the column names.
@@ -33,12 +35,13 @@ col_names_selected = setdiff(col_names_estimated, col_names_excluded)
 
 # Get the sample at which for the first time all sample sizes are greater than the convergence_ess value.
 convergence_sample_size <- 0
-for (last_sample in mcmc$Sample[(0.1*length(mcmc$Sample)):length(mcmc$Sample)]){
-	burnin <- burnin_proportion * last_sample
-	lowest_effective_sample_size <- min(effectiveSize(subset(mcmc, Sample > burnin & Sample <= last_sample, select = c(col_names_selected))))
-	if (lowest_effective_sample_size > convergence_ess){
-		convergence_sample_size <- last_sample
-		break
+for (last_sample in mcmc$Sample[1:length(mcmc$Sample)]){
+	if (last_sample > burnin+frequency) {
+		lowest_effective_sample_size <- min(effectiveSize(subset(mcmc, Sample > burnin & Sample <= last_sample, select = c(col_names_selected))))
+		if (lowest_effective_sample_size > convergence_ess){
+			convergence_sample_size <- last_sample
+			break
+		}
 	}
 }
 

@@ -9,13 +9,10 @@ library(coda)
 # Read the log file specified as the first command line argument.
 args <- commandArgs(trailingOnly = TRUE)
 log_file_name <- args[1]
+burnin <- as.integer(args[2])
 
 # Read the log file as a table.
 mcmc <- read.table(log_file_name,header=T)
-
-# Set the burning proportion.
-burnin_proportion <- 0.2
-burnin <- burnin_proportion * max(mcmc$Sample)
 
 # Get the column names.
 col_names <- colnames(mcmc)
