@@ -1,3 +1,3 @@
 # FBD test
 
-Scripts in this directory allow replicating results presented at [IPC5](https://ipc5.sciencesconf.org) (see slides at [http://www.evoinformatics.eu/presentations.htm](http://www.evoinformatics.eu/presentations.htm)). The commands specified in [run_all.sh](src/run_all.sh) should be executed in the order given in that file.
+Scripts in this directory allow replicating results presented at [IPC5](https://ipc5.sciencesconf.org) (see slides at [http://www.evoinformatics.eu/presentations.htm](http://www.evoinformatics.eu/presentations.htm)) and described in Matschiner (2019; [https://www.frontiersin.org/articles/10.3389/fgene.2019.01064/full](https://www.frontiersin.org/articles/10.3389/fgene.2019.01064/full)). The commands specified in [run_all.sh](src/run_all.sh) should be executed in the order given in that file.
